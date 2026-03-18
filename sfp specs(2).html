@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Transceiver Template</title>
+    <style>
+        /* --- Base Styles & Dark Theme --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #141414; 
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 25px;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 12px; 
+        }
+
+        /* --- STICKY HEADER (ΙΔΕΑ #4) --- */
+        th {
+            text-align: center;
+            padding: 12px;
+            color: #757575;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+            user-select: none;
+            
+            /* Sticky Properties */
+            position: sticky;
+            top: 0; /* Μένει κολλημένο στην κορυφή */
+            z-index: 10; /* Να είναι πάνω από τα υπόλοιπα στοιχεία */
+            
+            /* Visual styling για να φαίνεται καθαρό το sticky */
+            background-color: #141414; /* Ίδιο με το body ή πολύ σκούρο */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Σκιά για να ξεχωρίζει */
+        }
+        
+        th.no-sort { cursor: default; }
+        th:hover:not(.no-sort) { color: #00d2ff; border-bottom-color: #00d2ff; }
+
+        th.sort-asc::after { content: " \25B2"; font-size: 0.6rem; color: #00d2ff; }
+        th.sort-desc::after { content: " \25BC"; font-size: 0.6rem; color: #00d2ff; }
+
+        /* --- Main Row Styling --- */
+        tr.main-row td {
+            padding: 15px 10px;
+            background-color: #202020; 
+            vertical-align: middle;
+            text-align: center;
+            font-size: 0.9rem;
+            cursor: pointer; 
+            transition: background-color 0.2s;
+        }
+
+        tr.main-row:hover td { background-color: #282828; }
+
+        /* Στρογγυλεμένες πάνω γωνίες μόνο */
+        tr.main-row td:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 0; }
+        tr.main-row td:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 0; }
+
+        /* --- Expanded Row Styling --- */
+        tr.detail-row {
+            display: none; 
+        }
+        
+        tr.detail-row.open {
+            display: table-row;
+        }
+
+        tr.detail-row td {
+            padding: 0;
+            background-color: #202020; 
+            border: none;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        .detail-content {
+            padding: 25px 30px;
+            text-align: left;
+            color: #ccc;
+            font-size: 0.9rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05); 
+        }
+
+        .detail-item {
+            padding: 10px 15px;
+            border-left: 3px solid #3a7bd5;
+            background-color: rgba(0, 0, 0, 0.1); 
+            border-radius: 4px;
+        }
+
+        .detail-item strong {
+            color: #00d2ff;
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        /* Arrow Indicator */
+        .arrow {
+            display: inline-block;
+            margin-left: 5px;
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+            color: #555;
+        }
+        
+        tr.main-row.open .arrow {
+            transform: rotate(90deg);
+            color: #00d2ff;
+        }
+
+        /* --- Image Styling --- */
+        .module-img {
+            width: 80px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #444;
+            cursor: zoom-in;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4); 
+        }
+
+        .module-img:hover {
+            transform: scale(1.05);
+            border-color: #00d2ff;
+            box-shadow: 0 6px 12px rgba(0, 210, 255, 0.2);
+        }
+
+        /* --- Tags & Text Styling --- */
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .type-sfp { background: rgba(0, 210, 255, 0.1); color: #00d2ff; border: 1px solid #00d2ff; }
+        .type-sfp-plus { background: rgba(255, 107, 107, 0.1); color: #ff6b6b; border: 1px solid #ff6b6b; }
+        .type-sfp28 { background: rgba(78, 205, 196, 0.1); color: #4ecdc4; border: 1px solid #4ecdc4; }
+        .type-qsfp { background: rgba(255, 230, 109, 0.1); color: #ffe66d; border: 1px solid #ffe66d; }
+        .type-qsfp28 { background: rgba(149, 117, 205, 0.1); color: #9575cd; border: 1px solid #9575cd; }
+        .type-qsfp-dd { background: rgba(255, 165, 0, 0.1); color: #ffa500; border: 1px solid #ffa500; }
+
+        .fiber-sm { color: #ff9f43; font-weight: 600; }
+        .fiber-mm { color: #00d2d3; font-weight: 600; }
+
+        .wavelength {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            background: #333;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        /* --- LIGHTBOX (Modal) Styling --- */
+        .modal {
+            display: none; 
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 80%;
+            border: 2px solid #00d2ff;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.4);
+            animation: zoomIn 0.3s ease;
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover { color: #ff6b6b; }
+        
+        .modal-caption {
+            margin-top: 15px;
+            color: #ccc;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        /* --- PRINT STYLES --- */
+        @media print {
+            /* Στην εκτύπωση συνήθως θέλουμε κανονικό header, όχι sticky */
+            th { position: static; box-shadow: none; background-color: #f0f0f0; }
+            
+            tr.detail-row { display: none !important; }
+            .arrow { display: none; }
+            
+            body { background-color: white; color: black; }
+            h1 { color: #000; background: none; -webkit-text-fill-color: black; border-bottom: 2px solid #000; }
+            table { border-collapse: collapse; border-spacing: 0; }
+            td { background-color: white; color: black; border: 1px solid #ccc; border-radius: 0 !important; }
+            tr:hover td { background-color: white; }
+            .tag { border: 1px solid #555; background-color: transparent; color: black; }
+            .wavelength { background-color: #eee; color: black; border: 1px solid #aaa; }
+            .fiber-sm, .fiber-mm { color: black; }
+            .module-img { border: 1px solid #ccc; box-shadow: none; }
+            .modal { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LIGHTBOX Structure -->
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImg">
+        <div class="modal-caption" id="modalCaption"></div>
+    </div>
+
+    <div class="container">
+        <h1>SFP Optical Module Specifications</h1>
+        
+        <table id="moduleTable">
+            <thead>
+                <tr>
+                    <th class="no-sort" style="width: 20px;"></th>
+                    <th class="no-sort">Image</th>
+                    <th data-type="string">Module</th>
+                    <th data-type="string">Standard</th>
+                    <th data-type="number">Wave (nm)</th>
+                    <th data-type="string">Fiber</th>
+                    <th data-type="distance">Distance</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- SFP (1G) SX -->
+                <tr class="main-row" onclick="toggleRow(this)">
+                    <td><span class="arrow">►</span></td>
+                    <td><img src="https://c1.neweggimages.com/productimage/nb1280/V0VB_1_202004171840709786.jpg" alt="SFP Module" class="module-img" onclick="event.stopPropagation(); openModal(this)"></td>
+                    <td><span class="tag type-sfp">SFP (1G)</span></td>
+                    <td>1000BASE-SX</td>
+                    <td><span class="wavelength">850</span></td>
+                    <td class="fiber-mm">Multimode (OM2/OM3)</td>
+                    <td>550 m</td>
+                </tr>
+                <tr class="detail-row">
+                    <td colspan="7">
+                        <div class="detail-content">
+                            <div class="detail-item"><strong>Application</strong> Gigabit Ethernet, Fiber Channel.</div>
+                            <div class="detail-item"><strong>Connector</strong> Duplex LC</div>
+                            <div class="detail-item"><strong>DOM Support</strong> Yes (Digital Optical Monitoring)</div>
+                            <div class="detail-item"><strong>Temp. Range</strong> 0°C to 70°C (Commercial)</div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- QSFP-DD (400G) DR4 -->
+                <tr class="main-row" onclick="toggleRow(this)">
+                    <td><span class="arrow">►</span></td>
+                    <td><img src="https://resource.fs.com/mall/mainImg/202509011058208xqk3d.jpg" alt="QSFP-DD" class="module-img" onclick="event.stopPropagation(); openModal(this)"></td>
+                    <td><span class="tag type-qsfp-dd">QSFP-DD (400G)</span></td>
+                    <td>400GBASE-DR4</td>
+                    <td><span class="wavelength">1310</span></td>
+                    <td class="fiber-sm">Singlemode (MPO-12)</td>
+                    <td>500 m</td>
+                </tr>
+                <tr class="detail-row">
+                    <td colspan="7">
+                        <div class="detail-content">
+                            <div class="detail-item"><strong>Application</strong> 400G Ethernet, Data Center Interconnect.</div>
+                            <div class="detail-item"><strong>Connector</strong> MPO-12 (APC typically)</div>
+                            <div class="detail-item"><strong>Power Class</strong> Class 6 (Low Power)</div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- SFP+ (10G) ER -->
+                <tr class="main-row" onclick="toggleRow(this)">
+                    <td><span class="arrow">►</span></td>
+                    <td><img src="https://zhaoyongoptics.com/wp-content/uploads/2025/07/Cisco-SFP-10G-ER-1.jpg" alt="SFP+" class="module-img" onclick="event.stopPropagation(); openModal(this)"></td>
+                    <td><span class="tag type-sfp-plus">SFP+ (10G)</span></td>
+                    <td>10GBASE-ER</td>
+                    <td><span class="wavelength">1550</span></td>
+                    <td class="fiber-sm">Singlemode</td>
+                    <td>40 km</td>
+                </tr>
+                <tr class="detail-row">
+                    <td colspan="7">
+                        <div class="detail-content">
+                            <div class="detail-item"><strong>Application</strong> Long-haul 10G Ethernet.</div>
+                            <div class="detail-item"><strong>Connector</strong> Duplex LC</div>
+                            <div class="detail-item"><strong>Diagnostics</strong> DOM Supported</div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- SFP+ (10G) SR -->
+                <tr class="main-row" onclick="toggleRow(this)">
+                    <td><span class="arrow">►</span></td>
+                    <td><img src="https://static.bhphoto.com/images/images1000x1000/1481273186_1011679.jpg" alt="SFP+" class="module-img" onclick="event.stopPropagation(); openModal(this)"></td>
+                    <td><span class="tag type-sfp-plus">SFP+ (10G)</span></td>
+                    <td>10GBASE-SR</td>
+                    <td><span class="wavelength">850</span></td>
+                    <td class="fiber-mm">Multimode (OM3/OM4)</td>
+                    <td>300 m / 400 m</td>
+                </tr>
+                <tr class="detail-row">
+                    <td colspan="7">
+                        <div class="detail-content">
+                            <div class="detail-item"><strong>Application</strong> Short-range 10G Ethernet.</div>
+                            <div class="detail-item"><strong>Connector</strong> Duplex LC</div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- QSFP-DD (400G) FR4 -->
+                <tr class="main-row" onclick="toggleRow(this)">
+                    <td><span class="arrow">►</span></td>
+                    <td><img src="https://www.lsolink.com/wp-content/uploads/2025/05/400G-QDD-FR4-%E8%AF%A6%E6%83%851.jpg" alt="QSFP-DD" class="module-img" onclick="event.stopPropagation(); openModal(this)"></td>
+                    <td><span class="tag type-qsfp-dd">QSFP-DD (400G)</span></td>
+                    <td>400GBASE-FR4</td>
+                    <td><span class="wavelength">1270-1330</span></td>
+                    <td class="fiber-sm">Singlemode (Duplex LC)</td>
+                    <td>2 km</td>
+                </tr>
+                <tr class="detail-row">
+                    <td colspan="7">
+                        <div class="detail-content">
+                            <div class="detail-item"><strong>Application</strong> 400G Long Range.</div>
+                            <div class="detail-item"><strong>Wavelength</strong> CWDM4 LAN-WDM</div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- QSFP+ (40G) SR4 -->
+                <tr class="main-row" onclick="toggleRow(this)">
+                    <td><span class="arrow">►</span></td>
+                    <td><img src="https://img.genuinemodules.com/cache/catalog/products/QSFP-40G-SR4-S/QSFP-40G-SR4-S-1-1000x1000.jpg" alt="QSFP" class="module-img" onclick="event.stopPropagation(); openModal(this)"></td>
+                    <td><span class="tag type-qsfp">QSFP+ (40G)</span></td>
+                    <td>40GBASE-SR4</td>
+                    <td><span class="wavelength">850</span></td>
+                    <td class="fiber-mm">Multimode (MPO/MTP)</td>
+                    <td>150 m</td>
+                </tr>
+                <tr class="detail-row">
+                    <td colspan="7">
+                        <div class="detail-content">
+                            <div class="detail-item"><strong>Application</strong> 40G Ethernet short range.</div>
+                            <div class="detail-item"><strong>Connector</strong> MPO/MTP (12-fiber)</div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- QSFP28 (100G) SR4 -->
+                <tr class="main-row" onclick="toggleRow(this)">
+                    <td><span class="arrow">►</span></td>
+                    <td><img src="https://zhaoyongoptics.com/wp-content/uploads/2025/08/Cisco-QSFP-100G-SR4-S-3.jpg" alt="QSFP28" class="module-img" onclick="event.stopPropagation(); openModal(this)"></td>
+                    <td><span class="tag type-qsfp28">QSFP28 (100G)</span></td>
+                    <td>100GBASE-SR4</td>
+                    <td><span class="wavelength">850</span></td>
+                    <td class="fiber-mm">Multimode (MPO/MTP)</td>
+                    <td>100 m</td>
+                </tr>
+                <tr class="detail-row">
+                    <td colspan="7">
+                        <div class="detail-content">
+                            <div class="detail-item"><strong>Application</strong> 100G Ethernet short range.</div>
+                            <div class="detail-item"><strong>Connector</strong> MPO/MTP</div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- SFP28 (25G) SR -->
+                <tr class="main-row" onclick="toggleRow(this)">
+                    <td><span class="arrow">►</span></td>
+                    <td><img src="https://zhaoyongoptics.com/wp-content/uploads/2025/08/Cisco-SFP-25G-SR-S-1.jpg" alt="SFP28" class="module-img" onclick="event.stopPropagation(); openModal(this)"></td>
+                    <td><span class="tag type-sfp28">SFP28 (25G)</span></td>
+                    <td>25GBASE-SR</td>
+                    <td><span class="wavelength">850</span></td>
+                    <td class="fiber-mm">Multimode (OM4)</td>
+                    <td>100 m</td>
+                </tr>
+                <tr class="detail-row">
+                    <td colspan="7">
+                        <div class="detail-content">
+                            <div class="detail-item"><strong>Application</strong> 25G Ethernet.</div>
+                            <div class="detail-item"><strong>Connector</strong> Duplex LC</div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- SFP (1G) LX -->
+                <tr class="main-row" onclick="toggleRow(this)">
+                    <td><span class="arrow">►</span></td>
+                    <td><img src="https://zhaoyongoptics.com/wp-content/uploads/2025/07/Cisco-GLC-LH-SMD-Hologram-3.jpg" alt="SFP" class="module-img" onclick="event.stopPropagation(); openModal(this)"></td>
+                    <td><span class="tag type-sfp">SFP (1G)</span></td>
+                    <td>1000BASE-LX</td>
+                    <td><span class="wavelength">1310</span></td>
+                    <td class="fiber-sm">Singlemode</td>
+                    <td>10 km</td>
+                </tr>
+                <tr class="detail-row">
+                    <td colspan="7">
+                        <div class="detail-content">
+                            <div class="detail-item"><strong>Application</strong> Gigabit Long Haul.</div>
+                            <div class="detail-item"><strong>Connector</strong> Duplex LC</div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- SFP+ (10G) LR -->
+                <tr class="main-row" onclick="toggleRow(this)">
+                    <td><span class="arrow">►</span></td>
+                    <td><img src="https://zhaoyongoptics.com/wp-content/uploads/2025/07/Cisco-SFP-10G-LR-S-with-Hologram-3.jpg" alt="SFP+" class="module-img" onclick="event.stopPropagation(); openModal(this)"></td>
+                    <td><span class="tag type-sfp-plus">SFP+ (10G)</span></td>
+                    <td>10GBASE-LR</td>
+                    <td><span class="wavelength">1310</span></td>
+                    <td class="fiber-sm">Singlemode</td>
+                    <td>10 km</td>
+                </tr>
+                <tr class="detail-row">
+                    <td colspan="7">
+                        <div class="detail-content">
+                            <div class="detail-item"><strong>Application</strong> 10G Long Range.</div>
+                            <div class="detail-item"><strong>Connector</strong> Duplex LC</div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- SFP28 (25G) LR -->
+                <tr class="main-row" onclick="toggleRow(this)">
+                    <td><span class="arrow">►</span></td>
+                    <td><img src="https://zhaoyongoptics.com/wp-content/uploads/2025/08/Cisco-SFP-10-25G-LR-S-2.jpg" alt="SFP28" class="module-img" onclick="event.stopPropagation(); openModal(this)"></td>
+                    <td><span class="tag type-sfp28">SFP28 (25G)</span></td>
+                    <td>25GBASE-LR</td>
+                    <td><span class="wavelength">1310</span></td>
+                    <td class="fiber-sm">Singlemode</td>
+                    <td>10 km</td>
+                </tr>
+                <tr class="detail-row">
+                    <td colspan="7">
+                        <div class="detail-content">
+                            <div class="detail-item"><strong>Application</strong> 25G Long Range.</div>
+                            <div class="detail-item"><strong>Connector</strong> Duplex LC</div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- QSFP28 (100G) LR4 -->
+                <tr class="main-row" onclick="toggleRow(this)">
+                    <td><span class="arrow">►</span></td>
+                    <td><img src="https://zhaoyongoptics.com/wp-content/uploads/2025/08/Cisco-QSFP-100G-LR4-S-Hologram-3.jpg" alt="QSFP28" class="module-img" onclick="event.stopPropagation(); openModal(this)"></td>
+                    <td><span class="tag type-qsfp28">QSFP28 (100G)</span></td>
+                    <td>100GBASE-LR4</td>
+                    <td><span class="wavelength">1310</span></td>
+                    <td class="fiber-sm">Singlemode</td>
+                    <td>10 km</td>
+                </tr>
+                <tr class="detail-row">
+                    <td colspan="7">
+                        <div class="detail-content">
+                            <div class="detail-item"><strong>Application</strong> 100G Long Range.</div>
+                            <div class="detail-item"><strong>Connector</strong> Duplex LC</div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // --- 1. Sorting Logic (Groups) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const table = document.getElementById('moduleTable');
+            const headers = table.querySelectorAll('th:not(.no-sort)');
+            const tableBody = table.querySelector('tbody');
+            
+            let currentSort = { column: null, direction: 'asc' };
+
+            headers.forEach((header) => {
+                header.addEventListener('click', () => {
+                    const columnIndex = header.cellIndex;
+                    const type = header.getAttribute('data-type');
+                    let direction = 'asc';
+
+                    if (currentSort.column === columnIndex) {
+                        direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    }
+                    
+                    currentSort = { column: columnIndex, direction: direction };
+
+                    table.querySelectorAll('th').forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+                    header.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+
+                    const mainRows = tableBody.querySelectorAll('.main-row');
+                    let groups = [];
+                    
+                    mainRows.forEach(main => {
+                        const detail = main.nextElementSibling.classList.contains('detail-row') ? main.nextElementSibling : null;
+                        groups.push({ main, detail });
+                    });
+
+                    groups.sort((groupA, groupB) => {
+                        const cellA = groupA.main.cells[columnIndex].innerText.trim();
+                        const cellB = groupB.main.cells[columnIndex].innerText.trim();
+
+                        if (type === 'number') {
+                            const numA = parseFloat(cellA.match(/\d+/)?.[0] || 0);
+                            const numB = parseFloat(cellB.match(/\d+/)?.[0] || 0);
+                            return direction === 'asc' ? numA - numB : numB - numA;
+                        } 
+                        else if (type === 'distance') {
+                            const distA = convertToMeters(cellA);
+                            const distB = convertToMeters(cellB);
+                            return direction === 'asc' ? distA - distB : distB - distA;
+                        } 
+                        else {
+                            return direction === 'asc' ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+                        }
+                    });
+
+                    groups.forEach(group => {
+                        tableBody.appendChild(group.main);
+                        if (group.detail) {
+                            tableBody.appendChild(group.detail);
+                        }
+                    });
+                });
+            });
+
+            function convertToMeters(distStr) {
+                let value = parseFloat(distStr);
+                if (isNaN(value)) return 0;
+                if (distStr.includes('km')) return value * 1000;
+                return value;
+            }
+        });
+
+        // --- 2. Expand/Collapse Logic ---
+        function toggleRow(rowElement) {
+            const detailRow = rowElement.nextElementSibling;
+            
+            if (detailRow && detailRow.classList.contains('detail-row')) {
+                detailRow.classList.toggle('open');
+                rowElement.classList.toggle('open');
+            }
+        }
+
+        // --- 3. Lightbox Logic ---
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImg');
+        const modalCaption = document.getElementById('modalCaption');
+
+        function openModal(imgElement) {
+            modal.style.display = 'flex';
+            modalImg.src = imgElement.src;
+            modalCaption.innerHTML = imgElement.alt;
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+        
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
